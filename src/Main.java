@@ -11,43 +11,60 @@ import java.nio.file.Paths;
 
 public class Main
 {
-	static private final int BLOCKS_IN_BUFFER = 1;
+	static private final int BLOCKS_IN_BUFFER = 1; // the number of blocks read/written at once
 	static private RandomAccessFile randomAccessFile;
 	static private int blockSize;
-	static long position, reversePosition;
+	static long reversePosition, position;
 	
 	public static void main(String[] args) throws IOException, URISyntaxException
 	{
 		blockSize = (int) getPathFilesystem("/").getBlockSize();
-		byte[] buffer = new byte[blockSize * BLOCKS_IN_BUFFER];
+		byte[] buffer1 = new byte[blockSize * BLOCKS_IN_BUFFER];
+		byte[] buffer2 = new byte[blockSize * BLOCKS_IN_BUFFER];
 		
 		randomAccessFile = new RandomAccessFile(new File("files/input.txt"), "rw");
 		
-		position = randomAccessFile.length() - blockSize;
+		position = 0;
 		
-		while (position > 0)
+		if(randomAccessFile.length() % blockSize != 0) //there is half full block in the end
 		{
-			readFromPosition(position, buffer);
+			reversePosition = randomAccessFile.length() - randomAccessFile.length() % blockSize;
 			
-			position -= blockSize;
+			System.out.println("reading from: " + reversePosition);
+			buffer1 = readFromPosition(reversePosition, buffer1);
+			
+			
 		}
-				
-		if (position < 0) //if something is left
+		
+		
+		
+		reversePosition -= blockSize;
+		
+		while (reversePosition >= 0)
 		{
-			long negativeOffset = position;			
-			position = 0;
+			System.out.println("reading from: " + reversePosition);
+			buffer1 = readFromPosition(reversePosition, buffer1);
 			
-			readFromPosition(position, buffer, blockSize + (int) negativeOffset);
+			reversePosition -= blockSize;
+		}
+		
+		if (reversePosition < 0 && reversePosition != -blockSize) //if something is left
+		{
+			System.out.println("reading from: " + reversePosition);
+
+			long negativeOffset = reversePosition;			
+			reversePosition = 0;
 			
+			buffer1 = readFromPosition(reversePosition, buffer1, blockSize + (int) negativeOffset);
 		}
 	}
 	
-	public static void readFromPosition(long position, byte[] buffer) throws IOException
+	public static byte[] readFromPosition(long position, byte[] buffer) throws IOException
 	{
-		readFromPosition(position, buffer, buffer.length);
+		return readFromPosition(position, buffer, buffer.length);
 	}
 	
-	public static void readFromPosition(long position, byte[] buffer, int length) throws IOException
+	public static byte[] readFromPosition(long position, byte[] buffer, int length) throws IOException
 	{
 		buffer = new byte[blockSize * BLOCKS_IN_BUFFER]; //clear array
 		
@@ -55,12 +72,14 @@ public class Main
 		
 		randomAccessFile.read(buffer, 0, length);
 
-		randomAccessFile.seek(position);
-		
-		randomAccessFile.writeBytes("1111");
+//		randomAccessFile.seek(position);
+//		
+//		randomAccessFile.writeBytes("1111");
 		
 		String myString = new String(buffer, Charset.forName("UTF-8"));
 		System.out.println(myString);
+		
+		return buffer;
 	}
 	
 	public static FileStore getPathFilesystem(String path) throws URISyntaxException, IOException

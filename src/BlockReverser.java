@@ -31,7 +31,21 @@ public class BlockReverser
 		reversePosition = randomAccessFile.length() - blockSize;
 		position = 0;
 		
-		
+		while (position > 0)
+		{
+			readFromPosition(position, buffer);
+			
+			position -= blockSize;
+		}
+				
+		if (position < 0) //if something is left
+		{
+			long negativeOffset = position;			
+			position = 0;
+			
+			readFromPosition(position, buffer, blockSize + (int) negativeOffset);
+			
+		}
 	}
 	
 	public void readFromPosition(long position, byte[] buffer) throws IOException
