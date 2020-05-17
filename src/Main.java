@@ -18,6 +18,8 @@ public class Main
 	
 	public static void main(String[] args) throws IOException, URISyntaxException
 	{
+		long startTime = System.nanoTime();
+
 		blockSize = (int) getPathFilesystem("/").getBlockSize();
 		byte[] buffer1 = new byte[blockSize * BLOCKS_IN_BUFFER];
 		byte[] buffer2 = new byte[blockSize * BLOCKS_IN_BUFFER];
@@ -30,56 +32,94 @@ public class Main
 		{
 			reversePosition = randomAccessFile.length() - randomAccessFile.length() % blockSize;
 			
-			System.out.println("reading from: " + reversePosition);
+//			System.out.println("_rev reading from: " + reversePosition);
 			buffer1 = readFromPosition(reversePosition, buffer1);
 			
+//			System.out.println("_reading from: " + position + '\n');
+			buffer2 = readFromPosition(position, buffer2);
 			
-		}
-		
-		
-		
-		reversePosition -= blockSize;
-		
-		while (reversePosition >= 0)
-		{
-			System.out.println("reading from: " + reversePosition);
-			buffer1 = readFromPosition(reversePosition, buffer1);
+			buffer1 = reverseArray(buffer1);
+			buffer2 = reverseArray(buffer2);
+			
+			writeToPosition(position, buffer1);
+			writeToPosition(reversePosition, buffer2);
 			
 			reversePosition -= blockSize;
+			position += blockSize;
+		}
+		else
+		{
+			reversePosition = randomAccessFile.length() - blockSize;
 		}
 		
-		if (reversePosition < 0 && reversePosition != -blockSize) //if something is left
+		
+		while (reversePosition > position)
 		{
-			System.out.println("reading from: " + reversePosition);
-
-			long negativeOffset = reversePosition;			
-			reversePosition = 0;
+//			System.out.println("rev reading from: " + reversePosition);
+			buffer1 = readFromPosition(reversePosition, buffer1);
 			
-			buffer1 = readFromPosition(reversePosition, buffer1, blockSize + (int) negativeOffset);
+//			System.out.println("reading from: " + position);
+			buffer2 = readFromPosition(position, buffer2);
+			
+			buffer1 = reverseArray(buffer1);
+			buffer2 = reverseArray(buffer2);
+			
+			writeToPosition(position, buffer1);
+			writeToPosition(reversePosition, buffer2);
+			
+			reversePosition -= blockSize;
+			position += blockSize;
 		}
+		
+		long endTime = System.nanoTime();
+		System.out.println((endTime-startTime)/1000000);
+//		if (reversePosition < 0 && reversePosition != -blockSize) //if something is left
+//		{
+//			System.out.println("rev reading from: " + reversePosition);
+//
+//			long negativeOffset = reversePosition;			
+//			reversePosition = 0;
+//			
+//			buffer1 = readFromPosition(reversePosition, buffer1, blockSize + (int) negativeOffset);
+//		}
 	}
 	
-	public static byte[] readFromPosition(long position, byte[] buffer) throws IOException
+	private static byte[] readFromPosition(long position, byte[] buffer) throws IOException
 	{
 		return readFromPosition(position, buffer, buffer.length);
 	}
 	
-	public static byte[] readFromPosition(long position, byte[] buffer, int length) throws IOException
+	private static byte[] readFromPosition(long position, byte[] buffer, int length) throws IOException
 	{
 		buffer = new byte[blockSize * BLOCKS_IN_BUFFER]; //clear array
 		
 		randomAccessFile.seek(position);
 		
 		randomAccessFile.read(buffer, 0, length);
-
-//		randomAccessFile.seek(position);
-//		
-//		randomAccessFile.writeBytes("1111");
 		
-		String myString = new String(buffer, Charset.forName("UTF-8"));
-		System.out.println(myString);
+//		String myString = new String(buffer, Charset.forName("UTF-8"));
+//		System.out.println(myString);
 		
 		return buffer;
+	}
+	
+	private static void writeToPosition(long position, byte[] buffer) throws IOException
+	{
+		randomAccessFile.seek(position);
+		
+		randomAccessFile.write(buffer);
+	}
+	
+	private static byte[] reverseArray(byte[] arr)
+	{
+		for (int left = 0, right = arr.length - 1; left < right; left++, right--) {
+	        // swap the values at the left and right indices
+	        byte temp = arr[left];
+	        arr[left]  = arr[right];
+	        arr[right] = temp;
+	    }
+		
+		return arr;
 	}
 	
 	public static FileStore getPathFilesystem(String path) throws URISyntaxException, IOException
