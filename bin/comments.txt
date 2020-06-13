@@ -1,0 +1,2 @@
+Input file should be named "input.txt". Alternatively, you can change the FILE_NAME variable in code.
+

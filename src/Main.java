@@ -3,7 +3,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,18 +10,21 @@ import java.nio.file.Paths;
 
 /**
  * This program reverses the content of a given file.
- * The reversal is performed in place, without writing to any new file.
+ * The reversal is performed in place, without writing to any new file. <br> <br>
+ * The input file should be located in the same directory as the source code. 
+ * The default name for the file is "input.txt" but you can change the FILE_NAME variable in code. 
+ * The program is not limited to txt files; it can reverse any file.
  * @author Tarlan Ismayilsoy
- *
+ * @hidden asd
  */
 public class Main
 {
-	static private final String FILE_NAME = "input.txt"; // File name
-	static private final int BLOCKS_IN_BUFFER = 1; // The number of blocks read/written at once. Feel free to adjust
+	static private final String FILE_NAME = "rev.txt"; // File name
+	static private final int BLOCKS_IN_BUFFER = 200; // The number of blocks read/written at once. Feel free to adjust
 	
 	static private RandomAccessFile randomAccessFile;
 	static private int blockSize;
-	static long rightPosition, leftPosition;
+	static private long rightPosition, leftPosition;
 	
 	public static void main(String[] args) throws IOException, URISyntaxException
 	{
@@ -40,23 +42,19 @@ public class Main
 		leftPosition = 0;
 		rightPosition = randomAccessFile.length() - blockSize * BLOCKS_IN_BUFFER;
 		
-		if(rightPosition <= 0) //if the file is smaller than the buffer size
+		if(rightPosition <= 0) //if the file is smaller than the buffer size, handle it at once
 		{
 			rightPosition = 0;
-			buffer1 = new byte[(int) randomAccessFile.length()];
 			
 			buffer1 = readFromPosition(rightPosition, (int) randomAccessFile.length());
 			buffer1 = reverseArray(buffer1);
 			writeToPosition(rightPosition, buffer1, (int) randomAccessFile.length());
 		}
-		else // file needs to be read/written in blocks
+		else // file needs to be handled in blocks
 		{
 			while (rightPosition >= leftPosition)
 			{
-//				System.out.println("rev reading from: " + reversePosition);
 				buffer1 = readFromPosition(rightPosition, buffer1.length);
-				
-//				System.out.println("reading from: " + position);
 				buffer2 = readFromPosition(leftPosition, buffer2.length);
 				
 				buffer1 = reverseArray(buffer1);
@@ -88,17 +86,13 @@ public class Main
 		byte[] buffer = new byte[length]; //clear array
 		
 		randomAccessFile.seek(position);
-		
 		randomAccessFile.read(buffer, 0, length);
-		
-//		String myString = new String(buffer, Charset.forName("UTF-8"));
-//		System.out.println(myString);
 		
 		return buffer;
 	}
 	
 	/**
-	 * Writes to the given byte array to the given position in file.
+	 * Writes the given byte array to the given position in file.
 	 * @param position Position to start writing from
 	 * @param buffer Byte array to write
 	 * @throws IOException If an I/O error occurs
@@ -108,9 +102,15 @@ public class Main
 		writeToPosition(position, buffer, buffer.length);
 	}
 	
+	/**
+	 * Writes <i>length</i> bytes from the given byte array to the given position in file.
+	 * @param position Position to start writing from
+	 * @param buffer Byte array to write
+	 * @param length Number of bytes to write
+	 * @throws IOException If an I/O error occurs
+	 */
 	private static void writeToPosition(long position, byte[] buffer, int length) throws IOException
 	{
-//		System.out.println("wr length: " + length);
 		randomAccessFile.seek(position);
 		
 		randomAccessFile.write(buffer, 0, length);
@@ -135,7 +135,7 @@ public class Main
 	}
 	
 	/**
-	 * Returns the file system that the program resides in
+	 * Returns the file system that the program resides in.
 	 * @param path
 	 * @return
 	 * @throws URISyntaxException
